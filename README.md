@@ -11,7 +11,8 @@ and then asks whether you still want to open it. "Open anyway" lets you in; "Not
 takes you back to the home screen. Once you've chosen to continue, you aren't asked again
 until you leave that app.
 
-A **Stats** screen shows how often you turned back versus opened the app anyway, per week,
+A bottom bar switches between three tabs. **Apps** is where you pick the apps and the pause
+length. **Stats** shows how often you turned back versus opened the app anyway, per week,
 month or all time, and per app. **Settings** picks a light or dark theme (or follows the
 phone), and leads to **About**, which shows the version and links to the source.
 
@@ -77,7 +78,7 @@ To release: bump `appVersion`, commit, and tag the commit `vX.Y.Z`.
 app/src/main/java/net/meshkati/umm/
   AppWatchService.kt   accessibility service: detects the foreground app
   PauseActivity.kt     countdown + "Not now" / "Open anyway"; logs the outcome
-  MainActivity.kt      settings: service status, pause length, app list; screen navigation
+  MainActivity.kt      Apps tab: service status, pause length, app list; bottom bar and navigation
   StatsScreen.kt       Stats and per-app stats screens
   AboutScreen.kt       About screen
   Stats.kt             totals and chart buckets for a period
