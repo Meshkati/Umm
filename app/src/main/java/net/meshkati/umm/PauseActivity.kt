@@ -1,4 +1,4 @@
-package com.seyed.umm
+package net.meshkati.umm
 
 import android.content.Intent
 import android.content.pm.PackageManager

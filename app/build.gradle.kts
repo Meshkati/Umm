@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.seyed.umm"
+    namespace = "net.meshkati.umm"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.seyed.umm"
+        applicationId = "net.meshkati.umm"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
