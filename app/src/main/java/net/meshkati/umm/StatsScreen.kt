@@ -72,11 +72,10 @@ fun StatsScreen(
     onOpenApp: (String) -> Unit,
     onReset: () -> Unit,
     onChooseApps: () -> Unit,
-    onBack: () -> Unit,
 ) {
     var confirmReset by remember { mutableStateOf(false) }
 
-    Scaffold(topBar = { UmmTopBar(stringResource(R.string.stats_title), onBack) }) { padding ->
+    Scaffold(topBar = { UmmTopBar(stringResource(R.string.stats_title)) }) { padding ->
         when {
             events == null -> Unit
             events.isEmpty() -> EmptyStats(Modifier.padding(padding), onChooseApps)

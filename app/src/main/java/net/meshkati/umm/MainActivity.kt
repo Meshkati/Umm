@@ -9,6 +9,8 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,6 +22,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,8 +42,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -84,6 +89,20 @@ private enum class Screen {
         ABOUT -> SETTINGS
         else -> HOME
     }
+
+    /** The bottom-bar tab shown as selected on this screen. */
+    val tab: Tab get() = when (this) {
+        HOME -> Tab.APPS
+        STATS, APP_STATS -> Tab.STATS
+        SETTINGS, ABOUT -> Tab.SETTINGS
+    }
+}
+
+/** Bottom-bar tabs; each opens its top-level [screen]. */
+private enum class Tab(val screen: Screen, @DrawableRes val icon: Int, @StringRes val label: Int) {
+    APPS(Screen.HOME, R.drawable.ic_apps, R.string.tab_apps),
+    STATS(Screen.STATS, R.drawable.ic_stats, R.string.stats_title),
+    SETTINGS(Screen.SETTINGS, R.drawable.ic_settings, R.string.settings_title),
 }
 
 class MainActivity : ComponentActivity() {
@@ -119,48 +138,50 @@ class MainActivity : ComponentActivity() {
                 val back = { screen = screen.parent }
                 BackHandler(enabled = screen != Screen.HOME, onBack = back)
 
-                saveableState.SaveableStateProvider(screen.name) {
-                    when (screen) {
-                        Screen.HOME -> Home(
-                            apps = apps,
-                            onOpenStats = { screen = Screen.STATS },
-                            onOpenSettings = { screen = Screen.SETTINGS },
-                        )
-                        Screen.STATS -> StatsScreen(
-                            events = events,
-                            period = period,
-                            apps = appsByPackage,
-                            onPeriodChange = { period = it },
-                            onOpenApp = { statsPackage = it; screen = Screen.APP_STATS },
-                            onReset = ::resetStats,
-                            onChooseApps = { screen = Screen.HOME },
-                            onBack = back,
-                        )
-                        Screen.APP_STATS -> AppStatsScreen(
-                            packageName = statsPackage,
-                            events = events,
-                            period = period,
-                            app = appsByPackage[statsPackage],
-                            blocked = statsPackage in blocked,
-                            onUnblock = {
-                                prefs.setBlocked(statsPackage, false)
-                                blocked = prefs.blockedPackages
-                            },
-                            onBack = back,
-                        )
-                        Screen.SETTINGS -> SettingsScreen(
-                            themeMode = themeMode,
-                            versionName = packageInfo.versionName.orEmpty(),
-                            onThemeChange = ::changeTheme,
-                            onOpenAbout = { screen = Screen.ABOUT },
-                            onBack = back,
-                        )
-                        Screen.ABOUT -> AboutScreen(
-                            versionName = packageInfo.versionName.orEmpty(),
-                            versionCode = PackageInfoCompat.getLongVersionCode(packageInfo),
-                            onOpenLink = ::openLink,
-                            onBack = back,
-                        )
+                Scaffold(
+                    bottomBar = { UmmNavigationBar(selected = screen.tab, onSelect = { screen = it.screen }) },
+                    // Only make room for the bar: each screen's own Scaffold handles the status bar.
+                    contentWindowInsets = WindowInsets(0),
+                ) { padding ->
+                    Box(Modifier.padding(padding).consumeWindowInsets(padding)) {
+                        saveableState.SaveableStateProvider(screen.name) {
+                            when (screen) {
+                                Screen.HOME -> Home(apps)
+                                Screen.STATS -> StatsScreen(
+                                    events = events,
+                                    period = period,
+                                    apps = appsByPackage,
+                                    onPeriodChange = { period = it },
+                                    onOpenApp = { statsPackage = it; screen = Screen.APP_STATS },
+                                    onReset = ::resetStats,
+                                    onChooseApps = { screen = Screen.HOME },
+                                )
+                                Screen.APP_STATS -> AppStatsScreen(
+                                    packageName = statsPackage,
+                                    events = events,
+                                    period = period,
+                                    app = appsByPackage[statsPackage],
+                                    blocked = statsPackage in blocked,
+                                    onUnblock = {
+                                        prefs.setBlocked(statsPackage, false)
+                                        blocked = prefs.blockedPackages
+                                    },
+                                    onBack = back,
+                                )
+                                Screen.SETTINGS -> SettingsScreen(
+                                    themeMode = themeMode,
+                                    versionName = packageInfo.versionName.orEmpty(),
+                                    onThemeChange = ::changeTheme,
+                                    onOpenAbout = { screen = Screen.ABOUT },
+                                )
+                                Screen.ABOUT -> AboutScreen(
+                                    versionName = packageInfo.versionName.orEmpty(),
+                                    versionCode = PackageInfoCompat.getLongVersionCode(packageInfo),
+                                    onOpenLink = ::openLink,
+                                    onBack = back,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -196,19 +217,8 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Home(apps: List<AppEntry>, onOpenStats: () -> Unit, onOpenSettings: () -> Unit) {
-        Scaffold(
-            topBar = {
-                UmmTopBar(stringResource(R.string.app_name)) {
-                    IconButton(onClick = onOpenStats) {
-                        Icon(painterResource(R.drawable.ic_stats), contentDescription = stringResource(R.string.stats_title))
-                    }
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(painterResource(R.drawable.ic_settings), contentDescription = stringResource(R.string.settings_title))
-                    }
-                }
-            },
-        ) { padding ->
+    private fun Home(apps: List<AppEntry>) {
+        Scaffold(topBar = { UmmTopBar(stringResource(R.string.app_name)) }) { padding ->
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -255,6 +265,22 @@ class MainActivity : ComponentActivity() {
                 compareBy<AppEntry> { it.section == NON_LETTER_SECTION }
                     .thenBy(Collator.getInstance()) { it.label },
             )
+    }
+}
+
+/** Material 3 bottom navigation; tapping the current tab goes back to its top-level screen. */
+@Composable
+private fun UmmNavigationBar(selected: Tab, onSelect: (Tab) -> Unit) {
+    NavigationBar {
+        Tab.entries.forEach { tab ->
+            NavigationBarItem(
+                selected = tab == selected,
+                onClick = { onSelect(tab) },
+                // The label is read out, so the icon needs no description of its own.
+                icon = { Icon(painterResource(tab.icon), contentDescription = null) },
+                label = { Text(stringResource(tab.label)) },
+            )
+        }
     }
 }
 

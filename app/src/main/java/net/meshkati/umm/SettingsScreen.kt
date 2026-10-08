@@ -36,9 +36,8 @@ fun SettingsScreen(
     versionName: String,
     onThemeChange: (ThemeMode) -> Unit,
     onOpenAbout: () -> Unit,
-    onBack: () -> Unit,
 ) {
-    Scaffold(topBar = { UmmTopBar(stringResource(R.string.settings_title), onBack) }) { padding ->
+    Scaffold(topBar = { UmmTopBar(stringResource(R.string.settings_title)) }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
