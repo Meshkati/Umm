@@ -1,0 +1,70 @@
+# Umm
+
+Umm… do you really want to open that?
+
+A tiny, free, open-source Android app that makes you pause before opening apps you'd
+rather use less.
+
+Mark the apps you want to be mindful about (say, Twitter and YouTube). Whenever one of
+them comes to the foreground, Umm shows a full-screen countdown (3, 5 or 10 seconds)
+and then asks whether you still want to open it. "Open anyway" lets you in; "Not now"
+takes you back to the home screen. Once you've chosen to continue, you aren't asked again
+until you leave that app.
+
+That's it. No stats, no schedules, no accounts.
+
+## How it works
+
+Umm runs an [AccessibilityService](app/src/main/java/com/seyed/umm/AppWatchService.kt)
+that listens for window-state changes and reads only the package name of the app that
+just came to the front. It never reads screen content
+(`canRetrieveWindowContent="false"`). When the package is on your list, it launches
+[`PauseActivity`](app/src/main/java/com/seyed/umm/PauseActivity.kt) on top of it.
+
+Settings are stored in `SharedPreferences`; nothing leaves the device.
+
+## Build
+
+Requirements: JDK 17+ and the Android SDK (platform 36). The wrapper fetches Gradle.
+
+```sh
+./gradlew assembleDebug          # APK at app/build/outputs/apk/debug/app-debug.apk
+./gradlew installDebug           # build and install on the connected device/emulator
+```
+
+The project reads the SDK location from `local.properties` (`sdk.dir=...`), which is not
+committed. `gradle.properties` points Gradle at the JDK bundled with Android Studio on
+macOS; change `org.gradle.java.home` or remove that line if your setup differs.
+
+## Install and set up
+
+1. Install the APK (`./gradlew installDebug`, or copy the APK to the phone and open it).
+2. Open Umm and tap **Open accessibility settings**.
+3. Find **Umm** in the list and turn it on. Android will warn you that the app can
+   observe your actions; this is the permission the pause screen relies on.
+4. Back in Umm, pick a pause length and tick the apps you want to pause before.
+
+### If the toggle is greyed out ("Restricted setting")
+
+Android 13+ blocks accessibility services for apps installed outside an app store.
+Go to **Settings → Apps → Umm → ⋮ (top right) → Allow restricted settings**, then
+try again.
+
+### If it stops working after a while
+
+Some manufacturers (Samsung, Xiaomi, Huawei, Oppo) kill background services aggressively.
+Exclude Umm from battery optimisation in **Settings → Apps → Umm → Battery**, and
+on Xiaomi also enable **Autostart**.
+
+## Project layout
+
+```
+app/src/main/java/com/seyed/umm/
+  AppWatchService.kt   accessibility service: detects the foreground app
+  PauseActivity.kt     countdown + "Not now" / "Open anyway"
+  MainActivity.kt      settings: service status, pause length, app list
+  UmmPrefs.kt          SharedPreferences wrapper
+app/src/main/res/xml/accessibility_service_config.xml
+```
+
+Kotlin, Jetpack Compose (Material 3), minSdk 26, targetSdk 36.
