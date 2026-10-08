@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Semantic version (MAJOR.MINOR.PATCH). Bump this for each release and tag the commit vX.Y.Z.
+val appVersion = "0.1.0"
+
 android {
     namespace = "net.meshkati.umm"
     compileSdk = 36
@@ -12,8 +15,12 @@ android {
         applicationId = "net.meshkati.umm"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1"
+        versionName = appVersion
+        // MAJOR * 10000 + MINOR * 100 + PATCH, so MINOR and PATCH must each stay below 100.
+        versionCode = appVersion.split(".").map(String::toInt).let { (major, minor, patch) ->
+            require(minor < 100 && patch < 100) { "MINOR and PATCH must be below 100: $appVersion" }
+            major * 10000 + minor * 100 + patch
+        }
     }
 
     buildTypes {

@@ -57,6 +57,14 @@ Some manufacturers (Samsung, Xiaomi, Huawei, Oppo) kill background services aggr
 Exclude Umm from battery optimisation in **Settings → Apps → Umm → Battery**, and
 on Xiaomi also enable **Autostart**.
 
+## Versioning
+
+Umm follows [Semantic Versioning](https://semver.org). The version lives in one place,
+`appVersion` in [`app/build.gradle.kts`](app/build.gradle.kts); `versionCode` is derived
+from it as `MAJOR * 10000 + MINOR * 100 + PATCH` (so `0.1.0` → `100`, `1.2.3` → `10203`).
+
+To release: bump `appVersion`, commit, and tag the commit `vX.Y.Z`.
+
 ## Project layout
 
 ```
