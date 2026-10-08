@@ -23,7 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /** Chart and legend color for "Opened anyway"; "Turned back" uses the theme's primary. */
-val OpenedColor = Color(0xFFC8741F)
+val OpenedColor: Color
+    @Composable get() = if (isDarkTheme) Color(0xFFDB8A3A) else Color(0xFFC8741F)
 
 /** Top app bar; with [onBack] it shows a back arrow before the title. */
 @OptIn(ExperimentalMaterial3Api::class)

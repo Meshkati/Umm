@@ -77,9 +77,13 @@ import kotlinx.coroutines.withContext
 
 /** Screens of the main activity; back goes to [parent]. */
 private enum class Screen {
-    HOME, STATS, APP_STATS, ABOUT;
+    HOME, STATS, APP_STATS, SETTINGS, ABOUT;
 
-    val parent: Screen get() = if (this == APP_STATS) STATS else HOME
+    val parent: Screen get() = when (this) {
+        APP_STATS -> STATS
+        ABOUT -> SETTINGS
+        else -> HOME
+    }
 }
 
 class MainActivity : ComponentActivity() {
@@ -90,6 +94,7 @@ class MainActivity : ComponentActivity() {
     private var serviceEnabled by mutableStateOf(false)
     private var delay by mutableStateOf(UmmPrefs.DEFAULT_DELAY)
     private var blocked by mutableStateOf<Set<String>>(emptySet())
+    private var themeMode by mutableStateOf(ThemeMode.SYSTEM)
     /** Null until the log has been read. */
     private var events by mutableStateOf<List<PauseEvent>?>(null)
 
@@ -99,12 +104,13 @@ class MainActivity : ComponentActivity() {
         pauseLog = PauseLog(this)
         delay = prefs.delaySeconds
         blocked = prefs.blockedPackages
+        themeMode = prefs.themeMode
         val apps = loadLaunchableApps()
         val appsByPackage = apps.associateBy { it.packageName }
         val packageInfo = packageManager.getPackageInfo(packageName, 0)
 
         setContent {
-            MaterialTheme {
+            UmmTheme(themeMode) {
                 var screen by rememberSaveable { mutableStateOf(Screen.HOME) }
                 var statsPackage by rememberSaveable { mutableStateOf("") }
                 var period by rememberSaveable { mutableStateOf(Period.WEEK) }
@@ -118,7 +124,7 @@ class MainActivity : ComponentActivity() {
                         Screen.HOME -> Home(
                             apps = apps,
                             onOpenStats = { screen = Screen.STATS },
-                            onOpenAbout = { screen = Screen.ABOUT },
+                            onOpenSettings = { screen = Screen.SETTINGS },
                         )
                         Screen.STATS -> StatsScreen(
                             events = events,
@@ -140,6 +146,13 @@ class MainActivity : ComponentActivity() {
                                 prefs.setBlocked(statsPackage, false)
                                 blocked = prefs.blockedPackages
                             },
+                            onBack = back,
+                        )
+                        Screen.SETTINGS -> SettingsScreen(
+                            themeMode = themeMode,
+                            versionName = packageInfo.versionName.orEmpty(),
+                            onThemeChange = ::changeTheme,
+                            onOpenAbout = { screen = Screen.ABOUT },
                             onBack = back,
                         )
                         Screen.ABOUT -> AboutScreen(
@@ -168,6 +181,12 @@ class MainActivity : ComponentActivity() {
         events = emptyList()
     }
 
+    private fun changeTheme(mode: ThemeMode) {
+        themeMode = mode
+        prefs.themeMode = mode
+        applyNightMode(this, mode)
+    }
+
     private fun openLink(url: String) {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
@@ -177,15 +196,15 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun Home(apps: List<AppEntry>, onOpenStats: () -> Unit, onOpenAbout: () -> Unit) {
+    private fun Home(apps: List<AppEntry>, onOpenStats: () -> Unit, onOpenSettings: () -> Unit) {
         Scaffold(
             topBar = {
                 UmmTopBar(stringResource(R.string.app_name)) {
                     IconButton(onClick = onOpenStats) {
                         Icon(painterResource(R.drawable.ic_stats), contentDescription = stringResource(R.string.stats_title))
                     }
-                    IconButton(onClick = onOpenAbout) {
-                        Icon(painterResource(R.drawable.ic_info), contentDescription = stringResource(R.string.about_title))
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(painterResource(R.drawable.ic_settings), contentDescription = stringResource(R.string.settings_title))
                     }
                 }
             },

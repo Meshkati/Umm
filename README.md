@@ -12,7 +12,8 @@ takes you back to the home screen. Once you've chosen to continue, you aren't as
 until you leave that app.
 
 A **Stats** screen shows how often you turned back versus opened the app anyway, per week,
-month or all time, and per app. **About** shows the version and links to the source.
+month or all time, and per app. **Settings** picks a light or dark theme (or follows the
+phone), and leads to **About**, which shows the version and links to the source.
 
 That's it. No schedules, no accounts.
 

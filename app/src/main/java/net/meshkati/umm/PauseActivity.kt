@@ -45,10 +45,12 @@ class PauseActivity : ComponentActivity() {
         targetPackage = intent.getStringExtra(EXTRA_PACKAGE) ?: run { finish(); return }
 
         val label = appLabel(targetPackage)
-        val seconds = UmmPrefs(this).delaySeconds
+        val prefs = UmmPrefs(this)
+        val seconds = prefs.delaySeconds
+        val themeMode = prefs.themeMode
 
         setContent {
-            MaterialTheme {
+            UmmTheme(themeMode) {
                 PauseScreen(
                     appLabel = label,
                     seconds = seconds,

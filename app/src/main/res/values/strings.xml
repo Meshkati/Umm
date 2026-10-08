@@ -58,6 +58,15 @@
     <string name="recent">Recent</string>
     <string name="stop_pausing">Stop pausing before %1$s</string>
 
+    <string name="settings_title">Settings</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="theme_system">System default</string>
+    <string name="theme_system_detail">Follows your phone\u2019s dark theme</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="settings_about">About Umm</string>
+    <string name="settings_about_detail">Version %1$s, privacy, source code</string>
+
     <string name="about_title">About</string>
     <string name="about_version">Version %1$s (%2$d)</string>
     <string name="about_tagline">Umm… do you really want to open that?</string>
