@@ -11,7 +11,10 @@ and then asks whether you still want to open it. "Open anyway" lets you in; "Not
 takes you back to the home screen. Once you've chosen to continue, you aren't asked again
 until you leave that app.
 
-That's it. No stats, no schedules, no accounts.
+A **Stats** screen shows how often you turned back versus opened the app anyway, per week,
+month or all time, and per app. **About** shows the version and links to the source.
+
+That's it. No schedules, no accounts.
 
 ## How it works
 
@@ -22,7 +25,9 @@ list, it launches [`PauseActivity`](app/src/main/java/net/meshkati/umm/PauseActi
 on top of it. (`canRetrieveWindowContent` must be on for the service to ask which window
 is active; the only call made is `windows[i].root.packageName`.)
 
-Settings are stored in `SharedPreferences`; nothing leaves the device.
+Settings are stored in `SharedPreferences`. Each pause and what you chose is appended to a
+private file (`pauses.log`, see [`PauseLog`](app/src/main/java/net/meshkati/umm/PauseLog.kt))
+for the Stats screen. Nothing leaves the device: Umm has no internet permission.
 
 ## Build
 
@@ -70,8 +75,13 @@ To release: bump `appVersion`, commit, and tag the commit `vX.Y.Z`.
 ```
 app/src/main/java/net/meshkati/umm/
   AppWatchService.kt   accessibility service: detects the foreground app
-  PauseActivity.kt     countdown + "Not now" / "Open anyway"
-  MainActivity.kt      settings: service status, pause length, app list
+  PauseActivity.kt     countdown + "Not now" / "Open anyway"; logs the outcome
+  MainActivity.kt      settings: service status, pause length, app list; screen navigation
+  StatsScreen.kt       Stats and per-app stats screens
+  AboutScreen.kt       About screen
+  Stats.kt             totals and chart buckets for a period
+  PauseLog.kt          append-only log of pauses and their outcomes
+  Ui.kt                shared top bar and app icon
   UmmPrefs.kt          SharedPreferences wrapper
 app/src/main/res/xml/accessibility_service_config.xml
 ```

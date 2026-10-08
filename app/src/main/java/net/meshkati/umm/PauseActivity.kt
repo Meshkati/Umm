@@ -38,6 +38,7 @@ import kotlinx.coroutines.delay
 class PauseActivity : ComponentActivity() {
 
     private lateinit var targetPackage: String
+    private var recorded = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,12 +69,27 @@ class PauseActivity : ComponentActivity() {
         super.onStop()
     }
 
+    override fun onDestroy() {
+        // noHistory: leaving the screen (Home, recents) finishes it without a choice made.
+        if (isFinishing) record(Outcome.LEFT)
+        super.onDestroy()
+    }
+
+    /** Logs the first outcome only; finishing after a choice must not also count as leaving. */
+    private fun record(outcome: Outcome) {
+        if (recorded || !::targetPackage.isInitialized) return
+        recorded = true
+        PauseLog(this).record(targetPackage, outcome)
+    }
+
     private fun openAnyway() {
+        record(Outcome.OPENED)
         AppWatchService.allowedPackage = targetPackage
         finish()
     }
 
     private fun goHome() {
+        record(Outcome.TURNED_BACK)
         startActivity(
             Intent(Intent.ACTION_MAIN)
                 .addCategory(Intent.CATEGORY_HOME)

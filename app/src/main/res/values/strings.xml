@@ -8,10 +8,69 @@
     <string name="delay_label">Pause for</string>
     <string name="delay_seconds">%1$d s</string>
     <string name="apps_label">Pause before opening</string>
+    <string name="search_apps">Search apps</string>
+    <string name="clear_search">Clear</string>
+    <string name="no_apps_match">No apps match \u201c%1$s\u201d</string>
 
     <string name="pause_title">Umm…</string>
     <string name="pause_subtitle">You\'re about to open %1$s</string>
     <string name="pause_question">Still want to open it?</string>
     <string name="open_anyway">Open anyway</string>
     <string name="not_now">Not now</string>
+
+    <string name="back">Back</string>
+    <string name="today">Today</string>
+    <string name="yesterday">Yesterday</string>
+
+    <string name="stats_title">Stats</string>
+    <string name="period_week">Week</string>
+    <string name="period_month">Month</string>
+    <string name="period_all">All time</string>
+    <string name="period_week_long">Last 7 days</string>
+    <string name="period_month_long">Last 4 weeks</string>
+    <string name="period_all_long">All time</string>
+    <string name="stats_percent">%1$d%%</string>
+    <string name="stats_turned_back_share">of pauses, you turned back</string>
+    <string name="stats_pauses">Pauses</string>
+    <string name="turned_back">Turned back</string>
+    <string name="opened_anyway">Opened anyway</string>
+    <string name="left_without_choosing">Left without choosing</string>
+    <string name="with_percent">%1$s (%2$d%%)</string>
+    <string name="chart_days">Day by day</string>
+    <string name="chart_weeks">Week by week</string>
+    <string name="chart_months">Month by month</string>
+    <string name="by_app">By app</string>
+    <plurals name="pause_count">
+        <item quantity="one">%d pause</item>
+        <item quantity="other">%d pauses</item>
+    </plurals>
+    <string name="app_breakdown">%1$d turned back · %2$d opened anyway</string>
+    <string name="stats_period_empty">No pauses in this period.</string>
+    <string name="stats_local_only">Stats are kept only on this phone.</string>
+    <string name="reset_stats">Reset stats</string>
+    <string name="reset_stats_title">Reset stats?</string>
+    <string name="reset_stats_message">This deletes every recorded pause. It can\'t be undone.</string>
+    <string name="reset">Reset</string>
+    <string name="cancel">Cancel</string>
+    <string name="stats_empty_title">No pauses yet</string>
+    <string name="stats_empty_body">Each time Umm pauses before an app, it\'s counted here: whether you turned back or opened it anyway.</string>
+    <string name="choose_apps">Choose apps</string>
+    <string name="recent">Recent</string>
+    <string name="stop_pausing">Stop pausing before %1$s</string>
+
+    <string name="about_title">About</string>
+    <string name="about_version">Version %1$s (%2$d)</string>
+    <string name="about_tagline">Umm… do you really want to open that?</string>
+    <string name="about_description">A tiny, free, open-source app that makes you pause before opening apps you\'d rather use less.</string>
+    <string name="privacy_title">Your privacy</string>
+    <string name="privacy_name_only">Reads only the name of the app in front, never what\'s on the screen.</string>
+    <string name="privacy_local">Your settings and stats are stored on this phone only.</string>
+    <string name="privacy_offline">No internet permission, so Umm can\'t send anything anywhere.</string>
+    <string name="link_source">Source code</string>
+    <string name="link_source_detail">github.com/Meshkati/Umm</string>
+    <string name="link_issues">Report a problem</string>
+    <string name="link_issues_detail">Opens GitHub issues</string>
+    <string name="link_license">License</string>
+    <string name="link_license_detail">GNU GPL v3.0</string>
+    <string name="made_by">Made by Meshkati</string>
 </resources>
