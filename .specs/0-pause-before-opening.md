@@ -14,9 +14,19 @@ A short forced pause is enough to make the choice conscious without blocking any
 ## How
 
 **Detection** — an `AccessibilityService` (`AppWatchService`) subscribed to
-`TYPE_WINDOW_STATE_CHANGED`. It reads only `event.packageName`; `canRetrieveWindowContent`
-is off. This is the one Android mechanism that reliably reports the foreground app without
-special permissions beyond the accessibility toggle.
+`TYPE_WINDOW_STATE_CHANGED` and `TYPE_WINDOWS_CHANGED`. Events only schedule a check
+250 ms later; when the burst settles, the service reads the package name of the active
+window (`windows.first { isActive }.root.packageName`) and decides once. This is the one
+Android mechanism that reliably reports the foreground app without special permissions
+beyond the accessibility toggle.
+
+Two findings from the first real-phone test drove this shape:
+- `TYPE_WINDOW_STATE_CHANGED` alone misses the most common case: an app already in the
+  background is brought to the front, reusing its window, so no event is sent. Only
+  `TYPE_WINDOWS_CHANGED` fires. Reading the active window needs `canRetrieveWindowContent`.
+- Acting on raw events is wrong mid-transition: when leaving an app via home, the launcher's
+  event clears the allowance while the old app's window is still reported active, which
+  produced a pause screen over the launcher. Hence the settle delay.
 
 **Interrupt** — when the package is on the list, the service starts `PauseActivity`
 (`FLAG_ACTIVITY_NEW_TASK`) over the target app. Accessibility services bound by the system

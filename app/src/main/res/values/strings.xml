@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">Umm</string>
-    <string name="service_description">Umm watches which app comes to the foreground so it can show a short pause screen before apps you have marked. It does not read screen content.</string>
+    <string name="service_description">Umm watches which app comes to the foreground so it can show a short pause screen before apps you have marked. It only reads the name of the foreground app, never what is on the screen, and nothing leaves your phone.</string>
 
     <string name="status_on">Accessibility service is ON</string>
     <string name="status_off">Accessibility service is OFF</string>

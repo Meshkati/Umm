@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  canRetrieveWindowContent / flagRetrieveInteractiveWindows are needed only to ask which
+  window is active after a TYPE_WINDOWS_CHANGED event (an app brought back from the
+  background creates no new window, so TYPE_WINDOW_STATE_CHANGED alone misses it).
+  The service reads nothing but the package name of that window.
+-->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/service_description"
-    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityEventTypes="typeWindowStateChanged|typeWindowsChanged"
     android:accessibilityFeedbackType="feedbackGeneric"
-    android:notificationTimeout="100"
-    android:canRetrieveWindowContent="false" />
+    android:accessibilityFlags="flagRetrieveInteractiveWindows"
+    android:notificationTimeout="50"
+    android:canRetrieveWindowContent="true" />

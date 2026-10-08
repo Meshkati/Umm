@@ -1,4 +1,4 @@
-# Umm
+# Umm: pause before apps
 
 Umm… do you really want to open that?
 
@@ -15,11 +15,12 @@ That's it. No stats, no schedules, no accounts.
 
 ## How it works
 
-Umm runs an [AccessibilityService](app/src/main/java/com/seyed/umm/AppWatchService.kt)
-that listens for window-state changes and reads only the package name of the app that
-just came to the front. It never reads screen content
-(`canRetrieveWindowContent="false"`). When the package is on your list, it launches
-[`PauseActivity`](app/src/main/java/com/seyed/umm/PauseActivity.kt) on top of it.
+Umm runs an [AccessibilityService](app/src/main/java/net/meshkati/umm/AppWatchService.kt)
+that listens for window changes and, once they settle, reads the package name of the
+active window — nothing else: no text, no content, no input. When the package is on your
+list, it launches [`PauseActivity`](app/src/main/java/net/meshkati/umm/PauseActivity.kt)
+on top of it. (`canRetrieveWindowContent` must be on for the service to ask which window
+is active; the only call made is `windows[i].root.packageName`.)
 
 Settings are stored in `SharedPreferences`; nothing leaves the device.
 
@@ -59,7 +60,7 @@ on Xiaomi also enable **Autostart**.
 ## Project layout
 
 ```
-app/src/main/java/com/seyed/umm/
+app/src/main/java/net/meshkati/umm/
   AppWatchService.kt   accessibility service: detects the foreground app
   PauseActivity.kt     countdown + "Not now" / "Open anyway"
   MainActivity.kt      settings: service status, pause length, app list
