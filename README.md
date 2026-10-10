@@ -9,7 +9,8 @@ Mark the apps you want to be mindful about (say, Twitter and YouTube). Whenever 
 them comes to the foreground, Umm shows a full-screen countdown (3, 5 or 10 seconds)
 and then asks whether you still want to open it. "Open anyway" lets you in; "Not now"
 takes you back to the home screen. Once you've chosen to continue, you aren't asked again
-until you leave that app.
+until you leave that app, and after any choice that app isn't paused again for 10 seconds
+(so picture-in-picture and background play don't bring the pause screen straight back).
 
 A bottom bar switches between three tabs. **Apps** is where you pick the apps and the pause
 length. **Stats** shows how often you turned back versus opened the app anyway, per week,

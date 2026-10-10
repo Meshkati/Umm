@@ -77,11 +77,15 @@ class PauseActivity : ComponentActivity() {
         super.onDestroy()
     }
 
-    /** Logs the first outcome only; finishing after a choice must not also count as leaving. */
+    /**
+     * Logs the first outcome only; finishing after a choice must not also count as leaving.
+     * Any outcome also starts the service's quiet window for the app.
+     */
     private fun record(outcome: Outcome) {
         if (recorded || !::targetPackage.isInitialized) return
         recorded = true
         PauseLog(this).record(targetPackage, outcome)
+        AppWatchService.startQuietWindow(targetPackage)
     }
 
     private fun openAnyway() {

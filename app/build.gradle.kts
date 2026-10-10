@@ -5,7 +5,7 @@ plugins {
 }
 
 // Semantic version (MAJOR.MINOR.PATCH). Bump this for each release and tag the commit vX.Y.Z.
-val appVersion = "0.4.0"
+val appVersion = "0.4.1"
 
 android {
     namespace = "net.meshkati.umm"

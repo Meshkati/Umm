@@ -54,8 +54,9 @@ class AppWatchService : AccessibilityService() {
 
         if (pkg !in prefs.blockedPackages) return
         if (pkg == allowedPackage || pauseShowing) return
-        // Guard against re-launching before the pause screen has reported itself showing.
         val now = SystemClock.elapsedRealtime()
+        if (pkg == quietPackage && now < quietUntil) return
+        // Guard against re-launching before the pause screen has reported itself showing.
         if (now - lastLaunchAt < LAUNCH_DEBOUNCE_MS) return
         lastLaunchAt = now
 
@@ -77,6 +78,7 @@ class AppWatchService : AccessibilityService() {
         handler.removeCallbacks(check)
         allowedPackage = null
         pauseShowing = false
+        quietPackage = null
         super.onDestroy()
     }
 
@@ -107,8 +109,23 @@ class AppWatchService : AccessibilityService() {
         /** True while PauseActivity is on screen, so we don't launch it twice. */
         @Volatile var pauseShowing: Boolean = false
 
+        /**
+         * Package the user just made a choice for, and when (elapsedRealtime) that stops
+         * shielding it. Apps with picture-in-picture or background play keep resurfacing
+         * right after the pause screen closes, which would prompt again in a loop.
+         */
+        @Volatile private var quietPackage: String? = null
+        @Volatile private var quietUntil = 0L
+
+        /** Don't intercept [pkg] again for [QUIET_MS], whatever the user chose. */
+        fun startQuietWindow(pkg: String) {
+            quietUntil = SystemClock.elapsedRealtime() + QUIET_MS
+            quietPackage = pkg
+        }
+
         private const val SETTLE_MS = 250L
         private const val LAUNCH_DEBOUNCE_MS = 2_000L
+        private const val QUIET_MS = 10_000L
         private var lastLaunchAt = 0L
 
         fun isEnabled(context: Context): Boolean {
