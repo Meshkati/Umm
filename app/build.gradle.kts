@@ -1,3 +1,4 @@
+import com.android.build.api.dsl.ManagedVirtualDevice
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -23,6 +24,7 @@ android {
             require(minor < 100 && patch < 100) { "MINOR and PATCH must be below 100: $appVersion" }
             major * 10000 + minor * 100 + patch
         }
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -38,6 +40,19 @@ android {
 
     buildFeatures {
         compose = true
+    }
+
+    testOptions {
+        // An emulator Gradle boots for the device suite: ./gradlew pixel9Api36DebugAndroidTest
+        managedDevices {
+            allDevices {
+                create<ManagedVirtualDevice>("pixel9Api36") {
+                    device = "Pixel 9 Pro"
+                    apiLevel = 36
+                    systemImageSource = "google"
+                }
+            }
+        }
     }
 }
 
@@ -59,4 +74,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
+
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.uiautomator)
 }
