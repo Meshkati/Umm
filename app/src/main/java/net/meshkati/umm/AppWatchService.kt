@@ -35,8 +35,8 @@ class AppWatchService : AccessibilityService() {
 
     private val screenOff = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
-            if (sessionPackage != null) Log.d(TAG, "screen off, ending session")
-            endSession()
+            policy.endSession()
+            handler.removeCallbacks(timeUpCheck)
         }
     }
 
@@ -67,57 +67,29 @@ class AppWatchService : AccessibilityService() {
         if (isIgnored(pkg)) return
         Log.d(TAG, "foreground: $pkg")
 
-        // Moving to any other app (including the launcher) ends the "allowed" grace and the session.
-        if (allowedPackage != null && allowedPackage != pkg) {
-            Log.d(TAG, "left $allowedPackage, clearing allowance")
-            allowedPackage = null
-        }
-        if (sessionPackage != null && sessionPackage != pkg) {
-            Log.d(TAG, "left $sessionPackage, ending session")
-            endSession()
-        }
-
-        val now = SystemClock.elapsedRealtime()
-        if (pkg in prefs.blockedPackages && pkg != allowedPackage) {
-            if (pkg == quietPackage && now < quietUntil) {
-                // Just chose for this app and it came straight back (picture-in-picture):
-                // let it through for this visit, or the next event after the window re-pauses it.
-                allowedPackage = pkg
-            } else {
-                if (!pauseShowing) launchPause(pkg, now)
-                return
-            }
-        }
-
-        val limit = prefs.sessionLimit(pkg)
-        if (limit == 0) return
-        if (sessionPackage != pkg) {
-            Log.i(TAG, "session in $pkg, $limit min")
-            sessionPackage = pkg
-            sessionStartedAt = now
-            sessionEndsAt = now + limit * MINUTE_MS
-        }
-        val left = sessionEndsAt - now
-        if (left > 0) {
-            handler.removeCallbacks(timeUpCheck)
-            handler.postDelayed(timeUpCheck, left)
-        } else if (!pauseShowing) {
-            launchPause(pkg, now, sessionMinutes = ((now - sessionStartedAt + MINUTE_MS / 2) / MINUTE_MS).toInt())
+        // The policy asks for the timer again whenever a session is still running.
+        handler.removeCallbacks(timeUpCheck)
+        val action = policy.onForeground(
+            pkg,
+            blocked = pkg in prefs.blockedPackages,
+            limitMinutes = prefs.sessionLimit(pkg),
+        )
+        when (action) {
+            is PausePolicy.Action.Pause -> launchPause(action.packageName)
+            is PausePolicy.Action.TimeUp -> launchPause(action.packageName, action.minutes)
+            is PausePolicy.Action.CheckAgainIn -> handler.postDelayed(timeUpCheck, action.delayMs)
+            PausePolicy.Action.None -> Unit
         }
     }
 
     /** Shows the pause screen over [pkg]; the time-up version when [sessionMinutes] is given. */
-    private fun launchPause(pkg: String, now: Long, sessionMinutes: Int? = null) {
-        // Guard against re-launching before the pause screen has reported itself showing.
-        if (now - lastLaunchAt < LAUNCH_DEBOUNCE_MS) return
-        lastLaunchAt = now
-
+    private fun launchPause(pkg: String, sessionMinutes: Int? = null) {
         Log.i(TAG, if (sessionMinutes == null) "intercepting $pkg" else "time up in $pkg")
         val intent = Intent(this, PauseActivity::class.java)
             .putExtra(PauseActivity.EXTRA_PACKAGE, pkg)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         if (sessionMinutes != null) {
-            intent.putExtra(PauseActivity.EXTRA_TIME_UP_MINUTES, sessionMinutes.coerceAtLeast(1))
+            intent.putExtra(PauseActivity.EXTRA_TIME_UP_MINUTES, sessionMinutes)
         }
         try {
             startActivity(intent)
@@ -126,20 +98,13 @@ class AppWatchService : AccessibilityService() {
         }
     }
 
-    private fun endSession() {
-        sessionPackage = null
-        handler.removeCallbacks(timeUpCheck)
-    }
-
     override fun onInterrupt() = Unit
 
     override fun onDestroy() {
         unregisterReceiver(screenOff)
         handler.removeCallbacks(check)
-        endSession()
-        allowedPackage = null
-        pauseShowing = false
-        quietPackage = null
+        handler.removeCallbacks(timeUpCheck)
+        policy.reset()
         super.onDestroy()
     }
 
@@ -164,48 +129,10 @@ class AppWatchService : AccessibilityService() {
     companion object {
         private const val TAG = "AppWatchService"
 
-        /** Package the user chose "Open anyway" for; stays allowed until they switch apps. */
-        @Volatile var allowedPackage: String? = null
-
-        /** True while PauseActivity is on screen, so we don't launch it twice. */
-        @Volatile var pauseShowing: Boolean = false
-
-        /**
-         * Package the user just made a choice for, and when (elapsedRealtime) that stops
-         * shielding it. Apps with picture-in-picture or background play keep resurfacing
-         * right after the pause screen closes, which would prompt again in a loop.
-         */
-        @Volatile private var quietPackage: String? = null
-        @Volatile private var quietUntil = 0L
-
-        /** Don't intercept [pkg] again for [QUIET_MS], whatever the user chose. */
-        fun startQuietWindow(pkg: String) {
-            quietUntil = SystemClock.elapsedRealtime() + QUIET_MS
-            quietPackage = pkg
-        }
-
-        /**
-         * App whose session limit is running, and when (elapsedRealtime) the session started
-         * and runs out. A session ends when another app comes to the front or the screen
-         * turns off.
-         */
-        @Volatile private var sessionPackage: String? = null
-        @Volatile private var sessionStartedAt = 0L
-        @Volatile private var sessionEndsAt = 0L
-
-        /**
-         * Lets the session in [pkg] run [minutes] more from now. The timer is re-armed by the
-         * check that runs when the app is back in front.
-         */
-        fun extendSession(pkg: String, minutes: Int) {
-            if (sessionPackage == pkg) sessionEndsAt = SystemClock.elapsedRealtime() + minutes * MINUTE_MS
-        }
+        /** Shared with [PauseActivity], which reports what the user chose. */
+        val policy = PausePolicy(SystemClock::elapsedRealtime)
 
         private const val SETTLE_MS = 250L
-        private const val LAUNCH_DEBOUNCE_MS = 2_000L
-        private const val QUIET_MS = 10_000L
-        private const val MINUTE_MS = 60_000L
-        private var lastLaunchAt = 0L
 
         fun isEnabled(context: Context): Boolean {
             val expected = ComponentName(context, AppWatchService::class.java)

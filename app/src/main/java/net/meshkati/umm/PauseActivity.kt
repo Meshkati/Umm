@@ -80,11 +80,11 @@ class PauseActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        AppWatchService.pauseShowing = true
+        AppWatchService.policy.pauseShowing = true
     }
 
     override fun onStop() {
-        AppWatchService.pauseShowing = false
+        AppWatchService.policy.pauseShowing = false
         super.onStop()
     }
 
@@ -103,18 +103,18 @@ class PauseActivity : ComponentActivity() {
         if (recorded || !::targetPackage.isInitialized) return
         recorded = true
         if (timeUpMinutes == 0) PauseLog(this).record(targetPackage, outcome)
-        AppWatchService.startQuietWindow(targetPackage)
+        AppWatchService.policy.startQuietWindow(targetPackage)
     }
 
     private fun openAnyway() {
         record(Outcome.OPENED)
-        AppWatchService.allowedPackage = targetPackage
+        AppWatchService.policy.allowedPackage = targetPackage
         finish()
     }
 
     private fun extend(minutes: Int) {
         record(Outcome.OPENED)
-        AppWatchService.extendSession(targetPackage, minutes)
+        AppWatchService.policy.extendSession(targetPackage, minutes)
         finish()
     }
 
