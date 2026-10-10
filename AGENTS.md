@@ -40,7 +40,7 @@ Mark breaking changes with `!` after the type (e.g. `feat!: ...`) and explain th
 There are two suites:
 
 - **Local** (`app/src/test/`, `./gradlew test`): runs on the JVM and should pass on every change. Nearly all tests belong here. Use plain JUnit 4 for pure Kotlin code, and Robolectric when the code needs Android (`Context`, `SharedPreferences`, files) or a Compose screen.
-- **Device** (`app/src/androidTest/`, `./gradlew connectedAndroidTest`): a handful of UI Automator smoke tests on an emulator, run before releases. Only for what the JVM can't check, such as real accessibility events from other apps.
+- **Device** (`app/src/androidTest/`, `./gradlew pixel9Api36DebugAndroidTest`): a handful of UI Automator smoke tests on an emulator that Gradle boots and manages, run before releases. Only for what the JVM can't check, such as real accessibility events from other apps. Don't use `connectedAndroidTest`: it runs on every connected device, phones included, and the tests change the app's settings and the device's accessibility services.
 
 ### Scenarios need approval
 
