@@ -3,7 +3,10 @@ package net.meshkati.umm
 import android.content.Context
 import android.content.SharedPreferences
 
-/** Thin wrapper over SharedPreferences: which apps to pause before, for how long, and the theme. */
+/**
+ * Thin wrapper over SharedPreferences: which apps to pause before, for how long, each app's
+ * session limit, and the theme.
+ */
 class UmmPrefs(context: Context) {
 
     private val prefs: SharedPreferences =
@@ -27,12 +30,31 @@ class UmmPrefs(context: Context) {
         blockedPackages = if (blocked) blockedPackages + packageName else blockedPackages - packageName
     }
 
+    /** Minutes one session in [packageName] may last; 0 means no limit. */
+    fun sessionLimit(packageName: String): Int = prefs.getInt(KEY_LIMIT_PREFIX + packageName, 0)
+
+    fun setSessionLimit(packageName: String, minutes: Int) {
+        val key = KEY_LIMIT_PREFIX + packageName
+        prefs.edit().apply { if (minutes > 0) putInt(key, minutes) else remove(key) }.apply()
+    }
+
+    /** Every app with a session limit, and its limit in minutes. */
+    val sessionLimits: Map<String, Int>
+        get() = prefs.all.mapNotNull { (key, value) ->
+            if (key.startsWith(KEY_LIMIT_PREFIX) && value is Int) key.removePrefix(KEY_LIMIT_PREFIX) to value
+            else null
+        }.toMap()
+
     companion object {
         const val DEFAULT_DELAY = 5
         val DELAY_OPTIONS = listOf(3, 5, 10)
+        val LIMIT_OPTIONS = listOf(3, 5, 10, 15, 30)
+        /** Minutes the time-up screen offers to keep going for. */
+        val EXTEND_OPTIONS = listOf(1, 5, 10)
 
         private const val KEY_BLOCKED = "blocked_packages"
         private const val KEY_DELAY = "delay_seconds"
         private const val KEY_THEME = "theme"
+        private const val KEY_LIMIT_PREFIX = "limit_"
     }
 }

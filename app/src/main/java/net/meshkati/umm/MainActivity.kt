@@ -40,6 +40,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -70,6 +72,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.pm.PackageInfoCompat
 import androidx.core.graphics.drawable.toBitmap
@@ -113,6 +116,7 @@ class MainActivity : ComponentActivity() {
     private var serviceEnabled by mutableStateOf(false)
     private var delay by mutableStateOf(UmmPrefs.DEFAULT_DELAY)
     private var blocked by mutableStateOf<Set<String>>(emptySet())
+    private var limits by mutableStateOf<Map<String, Int>>(emptyMap())
     private var themeMode by mutableStateOf(ThemeMode.SYSTEM)
     /** Null until the log has been read. */
     private var events by mutableStateOf<List<PauseEvent>?>(null)
@@ -123,6 +127,7 @@ class MainActivity : ComponentActivity() {
         pauseLog = PauseLog(this)
         delay = prefs.delaySeconds
         blocked = prefs.blockedPackages
+        limits = prefs.sessionLimits
         themeMode = prefs.themeMode
         val apps = loadLaunchableApps()
         val appsByPackage = apps.associateBy { it.packageName }
@@ -237,12 +242,19 @@ class MainActivity : ComponentActivity() {
                     prefs.delaySeconds = it
                 }
                 Spacer(Modifier.height(16.dp))
-                Text(stringResource(R.string.apps_label), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.height(8.dp))
-                AppList(apps = apps, blocked = blocked) { pkg, checked ->
-                    prefs.setBlocked(pkg, checked)
-                    blocked = prefs.blockedPackages
-                }
+                AppList(
+                    apps = apps,
+                    blocked = blocked,
+                    limits = limits,
+                    onToggle = { pkg, checked ->
+                        prefs.setBlocked(pkg, checked)
+                        blocked = prefs.blockedPackages
+                    },
+                    onLimitChange = { pkg, minutes ->
+                        prefs.setSessionLimit(pkg, minutes)
+                        limits = prefs.sessionLimits
+                    },
+                )
             }
         }
     }
@@ -331,7 +343,13 @@ private fun DelaySelector(selected: Int, onSelect: (Int) -> Unit) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun AppList(apps: List<AppEntry>, blocked: Set<String>, onToggle: (String, Boolean) -> Unit) {
+private fun AppList(
+    apps: List<AppEntry>,
+    blocked: Set<String>,
+    limits: Map<String, Int>,
+    onToggle: (String, Boolean) -> Unit,
+    onLimitChange: (String, Int) -> Unit,
+) {
     var query by rememberSaveable { mutableStateOf("") }
     val sections = remember(apps, query) {
         val q = query.trim()
@@ -376,11 +394,20 @@ private fun AppList(apps: List<AppEntry>, blocked: Set<String>, onToggle: (Strin
             return@Column
         }
         Row(modifier = Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
-            LazyColumn(state = listState, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                sections.forEach { (section, items) ->
-                    stickyHeader(key = "section-$section") { SectionHeader(section) }
-                    items(items, key = { it.packageName }) { app ->
-                        AppRow(app, checked = app.packageName in blocked, onToggle = onToggle)
+            Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                AppListHeader()
+                LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                    sections.forEach { (section, items) ->
+                        stickyHeader(key = "section-$section") { SectionHeader(section) }
+                        items(items, key = { it.packageName }) { app ->
+                            AppRow(
+                                app,
+                                checked = app.packageName in blocked,
+                                limit = limits[app.packageName] ?: 0,
+                                onToggle = onToggle,
+                                onLimitChange = onLimitChange,
+                            )
+                        }
                     }
                 }
             }
@@ -407,8 +434,35 @@ private fun SectionHeader(section: String) {
     )
 }
 
+/** Column titles over the app rows, lined up with each row's limit button and checkbox. */
 @Composable
-private fun AppRow(app: AppEntry, checked: Boolean, onToggle: (String, Boolean) -> Unit) {
+private fun AppListHeader() {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            stringResource(R.string.apps_label),
+            modifier = Modifier.weight(1f),
+            style = MaterialTheme.typography.titleMedium,
+        )
+        listOf(R.string.limit_label to LIMIT_WIDTH, R.string.pause_label to CHECKBOX_WIDTH).forEach { (label, width) ->
+            Text(
+                stringResource(label),
+                modifier = Modifier.width(width),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AppRow(
+    app: AppEntry,
+    checked: Boolean,
+    limit: Int,
+    onToggle: (String, Boolean) -> Unit,
+    onLimitChange: (String, Int) -> Unit,
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -419,9 +473,50 @@ private fun AppRow(app: AppEntry, checked: Boolean, onToggle: (String, Boolean) 
         Image(bitmap = app.icon, contentDescription = null, modifier = Modifier.size(36.dp))
         Spacer(Modifier.width(12.dp))
         Text(app.label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-        Checkbox(checked = checked, onCheckedChange = { onToggle(app.packageName, it) })
+        LimitButton(limit = limit, onChange = { onLimitChange(app.packageName, it) })
+        Checkbox(
+            checked = checked,
+            onCheckedChange = { onToggle(app.packageName, it) },
+            modifier = Modifier.width(CHECKBOX_WIDTH),
+        )
     }
 }
+
+/** Shows an app's session limit; tapping it opens a menu of limits. */
+@Composable
+private fun LimitButton(limit: Int, onChange: (Int) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        TextButton(onClick = { open = true }, modifier = Modifier.width(LIMIT_WIDTH)) {
+            Text(
+                if (limit > 0) stringResource(R.string.limit_minutes, limit)
+                else stringResource(R.string.no_limit_short),
+                color = if (limit > 0) MaterialTheme.colorScheme.primary
+                else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            (listOf(0) + UmmPrefs.LIMIT_OPTIONS).forEach { minutes ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            if (minutes > 0) stringResource(R.string.limit_minutes, minutes)
+                            else stringResource(R.string.no_limit),
+                            fontWeight = if (minutes == limit) FontWeight.Bold else FontWeight.Normal,
+                        )
+                    },
+                    onClick = {
+                        open = false
+                        onChange(minutes)
+                    },
+                )
+            }
+        }
+    }
+}
+
+private val LIMIT_WIDTH = 80.dp
+private val CHECKBOX_WIDTH = 48.dp
 
 /** Vertical letter rail: tap or drag along it to jump to a section. */
 @Composable

@@ -12,8 +12,13 @@ takes you back to the home screen. Once you've chosen to continue, you aren't as
 until you leave that app, and after any choice that app isn't paused again for 10 seconds
 (so picture-in-picture and background play don't bring the pause screen straight back).
 
-A bottom bar switches between three tabs. **Apps** is where you pick the apps and the pause
-length. **Stats** shows how often you turned back versus opened the app anyway, per week,
+Apps can also have a **session limit** (3 to 30 minutes), set separately from the pause.
+When one visit to the app reaches its limit, Umm shows a time-up screen with the same
+countdown, then lets you close the app or keep going for 1, 5 or 10 more minutes. Leaving
+the app or turning the screen off ends the session; next time you get the full limit again.
+
+A bottom bar switches between three tabs. **Apps** is where you pick the apps, their session limits
+and the pause length. **Stats** shows how often you turned back versus opened the app anyway, per week,
 month or all time, and per app. **Settings** picks a light or dark theme (or follows the
 phone), and leads to **About**, which shows the version and links to the source.
 
@@ -77,15 +82,15 @@ To release: bump `appVersion`, commit, and tag the commit `vX.Y.Z`.
 
 ```
 app/src/main/java/net/meshkati/umm/
-  AppWatchService.kt   accessibility service: detects the foreground app
-  PauseActivity.kt     countdown + "Not now" / "Open anyway"; logs the outcome
+  AppWatchService.kt   accessibility service: detects the foreground app, times sessions
+  PauseActivity.kt     countdown + "Not now" / "Open anyway"; logs the outcome; time-up screen
   MainActivity.kt      Apps tab: service status, pause length, app list; bottom bar and navigation
   StatsScreen.kt       Stats and per-app stats screens
   AboutScreen.kt       About screen
   Stats.kt             totals and chart buckets for a period
   PauseLog.kt          append-only log of pauses and their outcomes
   Ui.kt                shared top bar and app icon
-  UmmPrefs.kt          SharedPreferences wrapper
+  UmmPrefs.kt          SharedPreferences wrapper: paused apps, limits, delay, theme
 app/src/main/res/xml/accessibility_service_config.xml
 ```
 

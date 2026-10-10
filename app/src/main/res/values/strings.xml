@@ -7,7 +7,12 @@
     <string name="open_accessibility_settings">Open accessibility settings</string>
     <string name="delay_label">Pause for</string>
     <string name="delay_seconds">%1$d s</string>
-    <string name="apps_label">Pause before opening</string>
+    <string name="apps_label">Apps</string>
+    <string name="limit_label">Limit</string>
+    <string name="pause_label">Pause</string>
+    <string name="no_limit">No limit</string>
+    <string name="no_limit_short">\u2014</string>
+    <string name="limit_minutes">%1$d min</string>
     <string name="search_apps">Search apps</string>
     <string name="clear_search">Clear</string>
     <string name="no_apps_match">No apps match \u201c%1$s\u201d</string>
@@ -17,6 +22,12 @@
     <string name="pause_question">Still want to open it?</string>
     <string name="open_anyway">Open anyway</string>
     <string name="not_now">Not now</string>
+
+    <string name="time_up_title">Time\'s up</string>
+    <string name="time_up_subtitle">%1$d min on %2$s</string>
+    <string name="time_up_question">Keep going?</string>
+    <string name="close">Close</string>
+    <string name="extend_minutes">+%1$d min</string>
 
     <string name="back">Back</string>
     <string name="tab_apps">Apps</string>
