@@ -32,3 +32,36 @@ chore: bump version to 0.5.0
 ```
 
 Mark breaking changes with `!` after the type (e.g. `feat!: ...`) and explain them in the body.
+
+## Tests
+
+### Suites
+
+There are two suites:
+
+- **Local** (`app/src/test/`, `./gradlew test`): runs on the JVM and should pass on every change. Nearly all tests belong here. Use plain JUnit 4 for pure Kotlin code, and Robolectric when the code needs Android (`Context`, `SharedPreferences`, files) or a Compose screen.
+- **Device** (`app/src/androidTest/`, `./gradlew pixel9Api36DebugAndroidTest`): a handful of UI Automator smoke tests on an emulator that Gradle boots and manages, run before releases. Only for what the JVM can't check, such as real accessibility events from other apps. Don't use `connectedAndroidTest`: it runs on every connected device, phones included, and the tests change the app's settings and the device's accessibility services.
+
+### Scenarios need approval
+
+Don't write a test scenario the user hasn't approved. Before writing tests, propose the scenarios as a list, one plain-language line each, and wait for the user to approve, change or drop them. Write only the approved ones. If a new scenario comes up while writing, fixing a bug or refactoring, propose it instead of adding it.
+
+### Writing tests
+
+- Test behaviour: what a caller or the user can observe, not how the code gets there. No BDD framework; mark the parts with `// given`, `// when` and `// then` comments.
+- One scenario per test, so a failing test names exactly what broke. Name the test after its scenario.
+- Assert only what the scenario is about. Don't assert incidental details (exact copy, call order, internal state) that would break on changes that aren't bugs.
+
+```kotlin
+@Test
+fun weekEndsOnToday() {
+    // given
+    val today = LocalDate.of(2026, 10, 11)
+
+    // when
+    val summary = summarize(emptyList(), Period.WEEK, ZoneOffset.UTC, today)
+
+    // then
+    assertEquals(today, summary.buckets.last().start)
+}
+```
