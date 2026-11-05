@@ -10,6 +10,10 @@ plugins {
 // Semantic version (MAJOR.MINOR.PATCH). Bump this for each release and tag the commit vX.Y.Z.
 val appVersion = "0.5.0"
 
+// Set by the release workflow (.github/workflows/release.yml). Without it, a release
+// build is unsigned.
+val releaseKeystore = providers.environmentVariable("RELEASE_KEYSTORE").orNull
+
 android {
     namespace = "net.meshkati.umm"
     compileSdk = 36
@@ -27,9 +31,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = file(releaseKeystore)
+                storePassword = providers.environmentVariable("RELEASE_KEYSTORE_PASSWORD").orNull
+                keyAlias = providers.environmentVariable("RELEASE_KEY_ALIAS").orNull
+                keyPassword = providers.environmentVariable("RELEASE_KEY_PASSWORD").orNull
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (releaseKeystore != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

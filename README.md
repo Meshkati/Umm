@@ -76,7 +76,28 @@ Umm follows [Semantic Versioning](https://semver.org). The version lives in one 
 `appVersion` in [`app/build.gradle.kts`](app/build.gradle.kts); `versionCode` is derived
 from it as `MAJOR * 10000 + MINOR * 100 + PATCH` (so `0.1.0` → `100`, `1.2.3` → `10203`).
 
-To release: bump `appVersion`, commit, and tag the commit `vX.Y.Z`.
+## CI and releases
+
+`.github/workflows/ci.yml` runs the local test suite (`./gradlew test`) on every pull
+request and push to `main`. Pushes to `main` also build a debug APK, kept as a workflow
+artifact for 14 days. For a pull request the APK is manual: **Actions → CI → Run workflow**
+on the PR's branch.
+
+Signed APKs are published on the [Releases](https://github.com/Meshkati/Umm/releases)
+page by `.github/workflows/release.yml`. To release: bump `appVersion`, merge it to
+`main`, then tag that commit:
+
+```sh
+git checkout main && git pull
+git tag v0.6.0 && git push origin v0.6.0
+```
+
+The tag must be `v` + `appVersion`, or the workflow stops before building. The Release
+gets the APK, a `SHA256SUMS` file and notes generated from the merged pull requests.
+
+The APK is signed with the release key from the repository's Actions secrets
+(`KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, `KEY_PASSWORD`). A pull request
+that changes `release.yml` builds and signs the APK the same way, without publishing it.
 
 ## Project layout
 
